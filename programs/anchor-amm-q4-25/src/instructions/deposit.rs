@@ -8,10 +8,15 @@ use constant_product_curve::ConstantProduct;
 use crate::{errors::AmmError, state::Config};
 
 #[derive(Accounts)]
+//Here is the the struct for the deposit Instruction. Which holds the all the necessary fields
+//required for the deposit from the liquidity provider.
 pub struct Deposit<'info> {
     #[account(mut)]
+    //Here we have the liquidity provider as the signer.
     pub user: Signer<'info>,
+    //Mint address of the X token the user holds.
     pub mint_x: Account<'info, Mint>,
+    //Mint address of the Y token the user holds.
     pub mint_y: Account<'info, Mint>,
     #[account(
         has_one = mint_x,
@@ -19,36 +24,43 @@ pub struct Deposit<'info> {
         seeds = [b"config", config.seed.to_le_bytes().as_ref()],
         bump = config.config_bump,
     )]
+    //Here is the config for the swap.
     pub config: Account<'info, Config>,
     #[account(
         mut,
         seeds = [b"lp", config.key().as_ref()],
         bump = config.lp_bump,
     )]
+    //Here  is the mind address of the custom lp token that we will mint to the liquidity provider
+    //when they deposit their tokens into the pool.
     pub mint_lp: Account<'info, Mint>,
     #[account(
         mut,
         associated_token::mint = mint_x,
         associated_token::authority = config,
     )]
+    //vault X for storing the X tokens that the liquidity provider deposits into the pool.
     pub vault_x: Account<'info, TokenAccount>,
     #[account(
         mut,
         associated_token::mint = mint_y,
         associated_token::authority = config,
     )]
+    //vault Y for storing the Y tokens.
     pub vault_y: Account<'info, TokenAccount>,
     #[account(
         mut,
         associated_token::mint = mint_x,
         associated_token::authority = user,
     )]
+    //User's ATA (associated token account) or the PDA which hold the x token.
     pub user_x: Account<'info, TokenAccount>,
     #[account(
         mut,
         associated_token::mint = mint_y,
         associated_token::authority = user,
     )]
+    //User's ATA (associated token account) or the PDA which hold the y token.
     pub user_y: Account<'info, TokenAccount>,
     #[account(
         init_if_needed,
@@ -56,7 +68,11 @@ pub struct Deposit<'info> {
         associated_token::mint = mint_lp,
         associated_token::authority = user,
     )]
+    //user's ATA (associated token account) or the PDA which will hold the lp token that we will
+    //mint to the user when they deposit their tokens into the pool.
     pub user_lp: Account<'info, TokenAccount>,
+
+    //Here are some extra accounts that we will need for the cpi calls.
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
     pub associated_token_program: Program<'info, AssociatedToken>,
